@@ -4,6 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ok so real quick...</title>
+  <meta name="description" content="i have a question for you. (i've been very normal about this. i have not.)" />
+
+  <!-- Open Graph / iMessage / social link preview -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://date-app-henna.vercel.app/" />
+  <meta property="og:title" content="ok so real quick… 🙈" />
+  <meta property="og:description" content="will you go on a date with me? (tap to answer 💌)" />
+  <meta property="og:image" content="https://date-app-henna.vercel.app/preview.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="ok so real quick… 🙈" />
+  <meta name="twitter:description" content="will you go on a date with me? (tap to answer 💌)" />
+  <meta name="twitter:image" content="https://date-app-henna.vercel.app/preview.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
@@ -93,6 +107,32 @@
       line-height: 1.7 !important;
       padding: 7px 0 !important;
     }
+    /* and force the staggered final-screen reveal fully shown when capturing */
+    .card.capturing #screen-3 .final-party,
+    .card.capturing #screen-3 .summary-row,
+    .card.capturing #screen-3 .see-you {
+      opacity: 1 !important;
+      animation: none !important;
+      transform: none !important;
+    }
+
+    /* staggered reveal of the final "here's the plan" payoff */
+    @keyframes revealUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    #screen-3.active .final-party,
+    #screen-3.active .summary-box .summary-row,
+    #screen-3.active .see-you {
+      opacity: 0;
+      animation: revealUp 0.5s ease forwards;
+    }
+    #screen-3.active .final-party                 { animation-delay: 0.25s; }
+    #screen-3.active .summary-row:nth-child(1)     { animation-delay: 0.50s; }
+    #screen-3.active .summary-row:nth-child(2)     { animation-delay: 0.66s; }
+    #screen-3.active .summary-row:nth-child(3)     { animation-delay: 0.82s; }
+    #screen-3.active .summary-row:nth-child(4)     { animation-delay: 0.98s; }
+    #screen-3.active .see-you                      { animation-delay: 1.25s; }
 
     .big-emoji {
       font-size: 54px;
@@ -168,6 +208,8 @@
       z-index: 2;
     }
     .btn-no:hover { background: rgba(255,255,255,0.12); }
+    /* mobile: the button continuously hops, so animate the moves quickly */
+    .btn-no.hopping { transition: left 0.16s ease, top 0.16s ease; }
 
     .no-teaser {
       text-align: center;
@@ -438,7 +480,9 @@
     step++;
     document.getElementById('screen-' + step).classList.add('active');
     setDot(step, 'active');
+    if (step !== 0) stopHopping();
     if (step === 3) showFinal();
+    else { playPop(); buzz(15); }
   }
 
   /* ─── option pick ─── */
@@ -449,6 +493,7 @@
     btn.classList.add('selected');
     ans[field] = label;
     ans[field + 'Emoji'] = emoji;
+    tone(660, 0, 0.08, 'sine', 0.12); buzz(12); // selection tick
     setTimeout(advance, 480);
   }
 
@@ -457,6 +502,8 @@
     document.getElementById('s-type').textContent = ans.typeEmoji + ' ' + ans.type;
     document.getElementById('s-when').textContent = ans.when + ' ' + ans.whenEmoji;
     confetti();
+    playCelebrate();
+    buzz([0, 40, 60, 40, 60, 120]); // celebratory pattern
   }
 
   /* ─── share ─── */
@@ -524,6 +571,7 @@
     nb.style.left = '0'; nb.style.top = '0';
     document.getElementById('screen-0').classList.add('active');
     setDot(0, 'active');
+    startHopping();
   }
 
   /* ─── no-button escape ─── */
@@ -567,38 +615,99 @@
     }
   }
 
-  document.addEventListener('mousemove', e => {
-    if (step !== 0) return;
-    const r  = noBtn.getBoundingClientRect();
-    const cx = r.left + r.width  / 2;
-    const cy = r.top  + r.height / 2;
-    if (Math.hypot(e.clientX - cx, e.clientY - cy) < 130) {
-      escapeFrom(e.clientX, e.clientY);
-    }
-  });
-
-  document.addEventListener('touchmove', e => {
-    if (step !== 0) return;
-    const t  = e.touches[0];
-    const r  = noBtn.getBoundingClientRect();
-    const cx = r.left + r.width  / 2;
-    const cy = r.top  + r.height / 2;
-    if (Math.hypot(t.clientX - cx, t.clientY - cy) < 130) {
-      escapeFrom(t.clientX, t.clientY);
-    }
-  }, { passive: true });
-
-  noBtn.addEventListener('click', () => {
-    noEscapes++;
-    document.getElementById('no-teaser').textContent = teasers[Math.min(noEscapes, teasers.length - 1)];
-    // jump to a random spot away from current position
+  // jump to a random spot inside the escape zone
+  function randomHop() {
     const cr   = s0Btns.getBoundingClientRect();
     const bw   = noBtn.offsetWidth;
     const bh   = noBtn.offsetHeight;
     const maxT = Math.max(cr.height - 56 - 10 - bh, 0);
-    noBtn.style.left = Math.round(Math.random() * (cr.width  - bw)) + 'px';
+    noBtn.style.left = Math.round(Math.random() * (cr.width - bw)) + 'px';
     noBtn.style.top  = Math.round(Math.random() * maxT) + 'px';
+  }
+
+  /* ─── DESKTOP: dodge the cursor (unchanged) ─── */
+  const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches
+                  || ('ontouchstart' in window);
+
+  if (!isTouch) {
+    document.addEventListener('mousemove', e => {
+      if (step !== 0) return;
+      const r  = noBtn.getBoundingClientRect();
+      const cx = r.left + r.width  / 2;
+      const cy = r.top  + r.height / 2;
+      if (Math.hypot(e.clientX - cx, e.clientY - cy) < 130) {
+        escapeFrom(e.clientX, e.clientY);
+      }
+    });
+  }
+
+  /* ─── MOBILE: ping around fast + flee any tap ─── */
+  let hopTimer = null;
+  function startHopping() {
+    if (!isTouch || hopTimer) return;
+    noBtn.classList.add('hopping');
+    hopTimer = setInterval(() => { if (step === 0) randomHop(); }, 620);
+  }
+  function stopHopping() {
+    clearInterval(hopTimer);
+    hopTimer = null;
+  }
+
+  // a tap attempt makes it dart away before the click can land
+  noBtn.addEventListener('touchstart', e => {
+    if (step !== 0) return;
+    e.preventDefault();             // cancel the would-be click
+    randomHop();
+    noEscapes++;
+    document.getElementById('no-teaser').textContent =
+      teasers[Math.min(noEscapes, teasers.length - 1)];
+  }, { passive: false });
+
+  // desktop click fallback (also dodges)
+  noBtn.addEventListener('click', () => {
+    noEscapes++;
+    document.getElementById('no-teaser').textContent = teasers[Math.min(noEscapes, teasers.length - 1)];
+    randomHop();
   });
+
+  /* ─── sound + haptics ─── */
+  let audioCtx = null;
+  function ac() {
+    if (!audioCtx) {
+      try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+      catch (_) { audioCtx = false; }
+    }
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+
+  function tone(freq, start, dur, type = 'sine', gain = 0.18) {
+    const ctx = ac(); if (!ctx) return;
+    const t = ctx.currentTime + start;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(gain, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.connect(g).connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + dur + 0.02);
+  }
+
+  // soft bubble "pop" for advancing a step
+  function playPop() { tone(520, 0, 0.12, 'triangle', 0.14); tone(780, 0.04, 0.12, 'sine', 0.1); }
+
+  // celebratory ascending arpeggio for the final screen
+  function playCelebrate() {
+    const notes = [523.25, 659.25, 783.99, 1046.5]; // C5 E5 G5 C6
+    notes.forEach((f, i) => tone(f, i * 0.11, 0.5, 'triangle', 0.16));
+    tone(1567.98, 0.5, 0.6, 'sine', 0.1); // sparkle G6
+  }
+
+  // haptics (Android; silently ignored where unsupported, e.g. iOS Safari)
+  function buzz(pattern) { try { navigator.vibrate && navigator.vibrate(pattern); } catch (_) {} }
 
   /* ─── confetti ─── */
   function confetti() {
@@ -643,6 +752,9 @@
     setTimeout(() => el.remove(), 14000);
   }
   setInterval(addSparkle, 600);
+
+  /* ─── init ─── */
+  startHopping();   // begin the mobile no-button chase on screen 0
 </script>
 </body>
 </html>
