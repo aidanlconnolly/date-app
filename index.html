@@ -6,6 +6,7 @@
   <title>ok so real quick...</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -375,7 +376,7 @@
 
   <!-- ── Step 3: Final ── -->
   <div class="screen" id="screen-3" style="position:relative;">
-    <button class="share-btn" id="share-btn" onclick="shareIt()">📲 send as text</button>
+    <button class="share-btn" id="share-btn" onclick="shareIt()">📸 screenshot</button>
     <span class="big-emoji">🥳</span>
     <div class="final-title">IT'S A DATE!!</div>
     <div class="final-party">🎊 💕 🎉 ✨ 🎀 ⭐ 🎊 💜</div>
@@ -444,25 +445,49 @@
   }
 
   /* ─── share ─── */
-  function shareIt() {
-    const url  = 'https://date-app-henna.vercel.app';
-    const text = `ok so real quick... will you go on a date with me? 🙈\n${url}`;
+  async function shareIt() {
     const btn  = document.getElementById('share-btn');
+    const card = document.getElementById('card');
 
-    if (navigator.share) {
-      navigator.share({ text })
-        .then(() => { btn.textContent = '✓ sent!'; btn.classList.add('sent'); })
-        .catch(() => {});
-    } else {
-      // fallback: open SMS with pre-filled body
-      window.open('sms:?body=' + encodeURIComponent(text));
-      btn.innerHTML = '✓ opened texts!';
-      btn.classList.add('sent');
+    btn.innerHTML = '⏳ capturing...';
+    btn.disabled = true;
+    btn.style.opacity = '0'; // hide from screenshot
+
+    try {
+      const canvas = await html2canvas(card, {
+        backgroundColor: null,
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      });
+
+      btn.style.opacity = '1';
+
+      const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+      const file = new File([blob], 'its-a-date.png', { type: 'image/png' });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: "it's a date!!" });
+        btn.innerHTML = '✓ shared!';
+        btn.classList.add('sent');
+      } else {
+        // fallback: download the image
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'its-a-date.png';
+        a.click();
+        btn.innerHTML = '✓ saved!';
+        btn.classList.add('sent');
+      }
+    } catch (_) {
+      btn.style.opacity = '1';
+      btn.innerHTML = '📸 screenshot';
     }
 
+    btn.disabled = false;
     setTimeout(() => {
       btn.classList.remove('sent');
-      btn.innerHTML = '📲 send as text';
+      btn.innerHTML = '📸 screenshot';
     }, 3000);
   }
 
