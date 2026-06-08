@@ -533,7 +533,7 @@
       const file = new File([blob], 'its-a-date.png', { type: 'image/png' });
 
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: "it's a date!!" });
+        await navigator.share({ files: [file] });
         btn.innerHTML = '✓ sent!';
         btn.classList.add('sent');
       } else {
