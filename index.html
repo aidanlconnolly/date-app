@@ -6,7 +6,7 @@
   <title>ok so real quick...</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -376,7 +376,7 @@
 
   <!-- ── Step 3: Final ── -->
   <div class="screen" id="screen-3" style="position:relative;">
-    <button class="share-btn" id="share-btn" onclick="shareIt()">📸 screenshot</button>
+    <button class="share-btn" id="share-btn" onclick="shareIt()">💌 send it to them</button>
     <span class="big-emoji">🥳</span>
     <div class="final-title">IT'S A DATE!!</div>
     <div class="final-party">🎊 💕 🎉 ✨ 🎀 ⭐ 🎊 💜</div>
@@ -445,35 +445,35 @@
   }
 
   /* ─── share ─── */
+  const SHARE_LABEL = '💌 send it to them';
+
   async function shareIt() {
     const btn  = document.getElementById('share-btn');
     const card = document.getElementById('card');
 
-    btn.innerHTML = '⏳ capturing...';
+    btn.innerHTML = '⏳ one sec...';
     btn.disabled = true;
-    btn.style.opacity = '0'; // hide from screenshot
+    btn.style.opacity = '0'; // hide button from the capture
 
     try {
-      const canvas = await html2canvas(card, {
-        backgroundColor: null,
-        scale: Math.max(window.devicePixelRatio * 2, 4),
-        useCORS: true,
-        logging: false,
-        imageTimeout: 0,
-        allowTaint: true,
+      // html-to-image rasterizes via SVG foreignObject — text stays vector-sharp
+      // and gradient-clipped text ("IT'S A DATE!!") renders correctly.
+      const blob = await htmlToImage.toBlob(card, {
+        pixelRatio: Math.max(window.devicePixelRatio || 1, 3),
+        backgroundColor: '#140d3d',
+        cacheBust: true,
       });
 
       btn.style.opacity = '1';
 
-      const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
       const file = new File([blob], 'its-a-date.png', { type: 'image/png' });
 
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({ files: [file], title: "it's a date!!" });
-        btn.innerHTML = '✓ shared!';
+        btn.innerHTML = '✓ sent!';
         btn.classList.add('sent');
       } else {
-        // fallback: download the image
+        // desktop fallback: download the image
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         a.download = 'its-a-date.png';
@@ -483,13 +483,13 @@
       }
     } catch (_) {
       btn.style.opacity = '1';
-      btn.innerHTML = '📸 screenshot';
+      btn.innerHTML = SHARE_LABEL;
     }
 
     btn.disabled = false;
     setTimeout(() => {
       btn.classList.remove('sent');
-      btn.innerHTML = '📸 screenshot';
+      btn.innerHTML = SHARE_LABEL;
     }, 3000);
   }
 
