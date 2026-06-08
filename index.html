@@ -78,6 +78,14 @@
       from { opacity: 0; transform: translateY(12px); }
       to   { opacity: 1; transform: translateY(0); }
     }
+    /* during screenshot capture, force the active screen fully visible —
+       html-to-image clones the node and would otherwise snapshot the
+       animation's opacity:0 starting frame, producing an empty image. */
+    .card.capturing .screen.active {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
 
     .big-emoji {
       font-size: 54px;
@@ -453,7 +461,8 @@
 
     btn.innerHTML = '⏳ one sec...';
     btn.disabled = true;
-    btn.style.opacity = '0'; // hide button from the capture
+    btn.style.opacity = '0';      // hide button from the capture
+    card.classList.add('capturing'); // freeze the entry animation at full opacity
 
     try {
       // html-to-image rasterizes via SVG foreignObject — text stays vector-sharp
@@ -465,6 +474,7 @@
       });
 
       btn.style.opacity = '1';
+      card.classList.remove('capturing');
 
       const file = new File([blob], 'its-a-date.png', { type: 'image/png' });
 
@@ -483,6 +493,7 @@
       }
     } catch (_) {
       btn.style.opacity = '1';
+      card.classList.remove('capturing');
       btn.innerHTML = SHARE_LABEL;
     }
 
