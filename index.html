@@ -86,6 +86,13 @@
       opacity: 1 !important;
       transform: none !important;
     }
+    /* html-to-image measures emoji/text slightly wider than the browser, so
+       summary values can wrap and collide. Give them room during capture. */
+    .card.capturing .summary-row {
+      display: block !important;
+      line-height: 1.7 !important;
+      padding: 7px 0 !important;
+    }
 
     .big-emoji {
       font-size: 54px;
