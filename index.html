@@ -267,6 +267,37 @@
     }
     .start-over-btn:hover { color: rgba(255,255,255,0.5); }
 
+    /* ─── Share button ─── */
+    .share-btn {
+      position: absolute;
+      top: 14px;
+      right: 20px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: rgba(255,255,255,0.1);
+      border: 1.5px solid rgba(255,255,255,0.18);
+      border-radius: 50px;
+      color: rgba(255,255,255,0.85);
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      z-index: 10;
+    }
+    .share-btn:hover {
+      background: rgba(255,255,255,0.18);
+      transform: scale(1.04);
+    }
+    .share-btn:active { transform: scale(0.97); }
+    .share-btn.sent {
+      background: rgba(52,211,153,0.2);
+      border-color: #34d399;
+      color: #6ee7b7;
+    }
+
     /* ─── Confetti ─── */
     .confetti-wrap {
       position: fixed;
@@ -343,7 +374,8 @@
   </div>
 
   <!-- ── Step 3: Final ── -->
-  <div class="screen" id="screen-3">
+  <div class="screen" id="screen-3" style="position:relative;">
+    <button class="share-btn" id="share-btn" onclick="shareIt()">📲 send as text</button>
     <span class="big-emoji">🥳</span>
     <div class="final-title">IT'S A DATE!!</div>
     <div class="final-party">🎊 💕 🎉 ✨ 🎀 ⭐ 🎊 💜</div>
@@ -409,6 +441,29 @@
     document.getElementById('s-type').textContent = ans.typeEmoji + ' ' + ans.type;
     document.getElementById('s-when').textContent = ans.when + ' ' + ans.whenEmoji;
     confetti();
+  }
+
+  /* ─── share ─── */
+  function shareIt() {
+    const url  = 'https://date-app-henna.vercel.app';
+    const text = `ok so real quick... will you go on a date with me? 🙈\n${url}`;
+    const btn  = document.getElementById('share-btn');
+
+    if (navigator.share) {
+      navigator.share({ text })
+        .then(() => { btn.textContent = '✓ sent!'; btn.classList.add('sent'); })
+        .catch(() => {});
+    } else {
+      // fallback: open SMS with pre-filled body
+      window.open('sms:?body=' + encodeURIComponent(text));
+      btn.innerHTML = '✓ opened texts!';
+      btn.classList.add('sent');
+    }
+
+    setTimeout(() => {
+      btn.classList.remove('sent');
+      btn.innerHTML = '📲 send as text';
+    }, 3000);
   }
 
   /* ─── reset ─── */
