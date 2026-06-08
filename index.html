@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ok so real quick...</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: radial-gradient(ellipse at 50% 30%, #1e1250 0%, #090516 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', system-ui, sans-serif;
+      overflow: hidden;
+      padding: 16px;
+    }
+
+    /* floating sparkles */
+    .bg-sparkle {
+      position: fixed;
+      pointer-events: none;
+      font-size: 18px;
+      animation: floatUp linear infinite;
+      opacity: 0;
+    }
+    @keyframes floatUp {
+      0%   { opacity: 0; transform: translateY(0) rotate(0deg); }
+      10%  { opacity: 0.6; }
+      90%  { opacity: 0.4; }
+      100% { opacity: 0; transform: translateY(-100vh) rotate(360deg); }
+    }
+
+    .card {
+      background: linear-gradient(175deg, #231660 0%, #170f45 60%, #100b35 100%);
+      border-radius: 28px;
+      width: 400px;
+      max-width: 100%;
+      box-shadow: 0 30px 90px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .rainbow-bar {
+      height: 5px;
+      background: linear-gradient(90deg,
+        #ff0055 0%, #ff4500 16%, #ffd700 32%,
+        #00e676 48%, #00bfff 65%, #651fff 82%, #ff0055 100%
+      );
+    }
+
+    .step-indicators {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      padding: 18px 0 24px;
+    }
+
+    .step-dash {
+      height: 4px;
+      width: 38px;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.13);
+      transition: background 0.4s;
+    }
+    .step-dash.active    { background: #e040fb; }
+    .step-dash.completed { background: rgba(255,255,255,0.38); }
+
+    /* screens */
+    .screen { display: none; padding: 0 28px 32px; }
+    .screen.active { display: block; animation: slideIn 0.35s ease; }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .big-emoji {
+      font-size: 54px;
+      text-align: center;
+      display: block;
+      margin-bottom: 18px;
+    }
+
+    .main-title {
+      font-size: 27px;
+      font-weight: 800;
+      color: #fff;
+      text-align: center;
+      line-height: 1.25;
+      margin-bottom: 10px;
+    }
+
+    .accent-pink  { color: #e879f9; }
+    .accent-gold  { color: #fbbf24; }
+    .accent-lilac { color: #c084fc; }
+
+    .subtitle {
+      font-size: 13px;
+      color: rgba(255,255,255,0.45);
+      text-align: center;
+      font-style: italic;
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+
+    /* ─── Screen 0 buttons ─── */
+    .s0-btns {
+      position: relative;
+      height: 170px; /* room for no to escape in top portion */
+    }
+
+    .btn-yes {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding: 17px;
+      background: linear-gradient(135deg, #e040fb 0%, #b721d7 100%);
+      color: #fff;
+      font-size: 18px;
+      font-weight: 800;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      letter-spacing: 0.4px;
+      box-shadow: 0 8px 28px rgba(224,64,251,0.45);
+      transition: transform 0.15s, box-shadow 0.15s;
+      z-index: 1;
+    }
+    .btn-yes:hover {
+      transform: scale(1.03);
+      box-shadow: 0 12px 36px rgba(224,64,251,0.55);
+    }
+    .btn-yes:active { transform: scale(0.98); }
+
+    .btn-no {
+      position: absolute;
+      top: 0; left: 0;
+      padding: 9px 22px;
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.55);
+      font-size: 14px;
+      font-weight: 600;
+      border: 1.5px solid rgba(255,255,255,0.14);
+      border-radius: 50px;
+      cursor: pointer;
+      white-space: nowrap;
+      user-select: none;
+      transition: background 0.15s;
+      z-index: 2;
+    }
+    .btn-no:hover { background: rgba(255,255,255,0.12); }
+
+    .no-teaser {
+      text-align: center;
+      font-size: 13px;
+      color: #f472b6;
+      font-style: italic;
+      min-height: 20px;
+      margin-top: 10px;
+    }
+
+    /* ─── Option grids ─── */
+    .grid-2x3, .grid-2x2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .opt-btn {
+      background: rgba(255,255,255,0.06);
+      border: 2px solid rgba(255,255,255,0.09);
+      border-radius: 16px;
+      padding: 18px 10px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .opt-btn .oe { font-size: 26px; }
+    .opt-btn:hover {
+      background: rgba(255,255,255,0.11);
+      border-color: rgba(255,255,255,0.22);
+      transform: scale(1.03);
+    }
+    .opt-btn.selected {
+      background: rgba(232,62,252,0.18);
+      border-color: #e040fb;
+      color: #f0abfc;
+    }
+
+    /* ─── Final screen ─── */
+    .final-title {
+      font-size: 40px;
+      font-weight: 900;
+      text-align: center;
+      background: linear-gradient(90deg, #fbbf24 0%, #f472b6 50%, #c084fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 6px;
+    }
+
+    .final-party {
+      text-align: center;
+      font-size: 19px;
+      letter-spacing: 3px;
+      margin-bottom: 10px;
+    }
+
+    .summary-box {
+      background: rgba(255,255,255,0.06);
+      border-radius: 16px;
+      padding: 18px 20px;
+      margin-bottom: 22px;
+    }
+
+    .summary-row {
+      font-size: 14px;
+      color: rgba(255,255,255,0.6);
+      padding: 5px 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .summary-val {
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .see-you {
+      text-align: center;
+      font-size: 18px;
+      font-weight: 800;
+      color: #f472b6;
+      margin-bottom: 14px;
+    }
+
+    .fine-print {
+      text-align: center;
+      font-size: 11px;
+      color: rgba(255,255,255,0.22);
+      font-style: italic;
+      margin-bottom: 12px;
+    }
+
+    .start-over-btn {
+      display: block;
+      width: 100%;
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.28);
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      text-decoration: underline;
+      text-align: center;
+    }
+    .start-over-btn:hover { color: rgba(255,255,255,0.5); }
+
+    /* ─── Confetti ─── */
+    .confetti-wrap {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 100;
+    }
+    .cp {
+      position: absolute;
+      top: -16px;
+      animation: cpFall linear forwards;
+      border-radius: 2px;
+    }
+    @keyframes cpFall {
+      0%   { opacity: 1; transform: translateY(0) rotate(0deg); }
+      100% { opacity: 0; transform: translateY(105vh) rotate(600deg); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="confetti-wrap" id="confetti"></div>
+
+<div class="card" id="card">
+  <div class="rainbow-bar"></div>
+
+  <div class="step-indicators">
+    <div class="step-dash active"  id="dot-0"></div>
+    <div class="step-dash"         id="dot-1"></div>
+    <div class="step-dash"         id="dot-2"></div>
+    <div class="step-dash"         id="dot-3"></div>
+  </div>
+
+  <!-- ── Step 0: The ask ── -->
+  <div class="screen active" id="screen-0">
+    <span class="big-emoji">🙈</span>
+    <div class="main-title">ok so real quick...<br>will you go on a <span class="accent-pink">date</span><br>with me?</div>
+    <div class="subtitle">i have been very normal about this. (i have not.)</div>
+
+    <div class="s0-btns" id="s0-btns">
+      <button class="btn-no" id="no-btn">no</button>
+      <button class="btn-yes" id="yes-btn" onclick="advance()">YES obviously 🎉</button>
+    </div>
+    <div class="no-teaser" id="no-teaser"></div>
+  </div>
+
+  <!-- ── Step 1: Date type ── -->
+  <div class="screen" id="screen-1">
+    <span class="big-emoji">🎉</span>
+    <div class="main-title">WAIT you said yes??<br>okay okay okay</div>
+    <div class="subtitle">just one thing — what's your ideal date?<br>(i'm definitely not already planning it)</div>
+    <div class="grid-2x3">
+      <button class="opt-btn" onclick="pick(this,'type','fancy dinner','🍽️')"><span class="oe">🍽️</span>fancy dinner</button>
+      <button class="opt-btn" onclick="pick(this,'type','movie night','🎬')"><span class="oe">🎬</span>movie night</button>
+      <button class="opt-btn" onclick="pick(this,'type','picnic outside','🧺')"><span class="oe">🧺</span>picnic outside</button>
+      <button class="opt-btn" onclick="pick(this,'type','fun &amp; games','🎮')"><span class="oe">🎮</span>fun &amp; games</button>
+      <button class="opt-btn" onclick="pick(this,'type','coffee &amp; vibes','☕')"><span class="oe">☕</span>coffee &amp; vibes</button>
+      <button class="opt-btn" onclick="pick(this,'type','something artsy','🎨')"><span class="oe">🎨</span>something artsy</button>
+    </div>
+  </div>
+
+  <!-- ── Step 2: When ── -->
+  <div class="screen" id="screen-2">
+    <span class="big-emoji">📅</span>
+    <div class="main-title">amazing. when are<br>you free?</div>
+    <div class="subtitle">i'm rearranging my entire schedule as we speak 🍋</div>
+    <div class="grid-2x2">
+      <button class="opt-btn" onclick="pick(this,'when','this weekend','🤝')"><span class="oe">🤝</span>this weekend</button>
+      <button class="opt-btn" onclick="pick(this,'when','next week','📅')"><span class="oe">📅</span>next week</button>
+      <button class="opt-btn" onclick="pick(this,'when','pretty soon','✨')"><span class="oe">✨</span>pretty soon</button>
+      <button class="opt-btn" onclick="pick(this,'when','anytime for you','🥺')"><span class="oe">🥺</span>anytime for you</button>
+    </div>
+  </div>
+
+  <!-- ── Step 3: Final ── -->
+  <div class="screen" id="screen-3">
+    <span class="big-emoji">🥳</span>
+    <div class="final-title">IT'S A DATE!!</div>
+    <div class="final-party">🎊 💕 🎉 ✨ 🎀 ⭐ 🎊 💜</div>
+    <div class="subtitle">thank god. i was so nervous i almost didn't ask. here's the plan:</div>
+
+    <div class="summary-box">
+      <div class="summary-row">📍 what we're doing: <span class="summary-val accent-pink" id="s-type"></span></div>
+      <div class="summary-row">📅 when: <span class="summary-val accent-gold" id="s-when"></span></div>
+      <div class="summary-row">📋 planned by: <span class="summary-val accent-lilac">me (with zero chill)</span></div>
+      <div class="summary-row">⭐ vibe check: <span class="summary-val">immaculate, actually</span></div>
+    </div>
+
+    <div class="see-you">see you there 🌹</div>
+    <div class="fine-print">this quiz is legally, emotionally &amp; spiritually binding. no backsies.</div>
+    <button class="start-over-btn" onclick="reset()">↺ start over (why would you though)</button>
+  </div>
+</div>
+
+<script>
+  /* ─── state ─── */
+  let step = 0;
+  const ans = { type: '', typeEmoji: '', when: '', whenEmoji: '' };
+  let teaserShown = false;
+  let noEscapes = 0;
+
+  const teasers = [
+    'the button said NO to YOU 😭',
+    "it's literally running away from you 💀",
+    'coward button behavior 😅',
+    'let it go bestie. just click YES 💅',
+  ];
+
+  /* ─── dot helpers ─── */
+  function setDot(i, state) {
+    const d = document.getElementById('dot-' + i);
+    d.classList.remove('active', 'completed');
+    if (state) d.classList.add(state);
+  }
+
+  /* ─── advance step ─── */
+  function advance() {
+    document.getElementById('screen-' + step).classList.remove('active');
+    setDot(step, 'completed');
+    step++;
+    document.getElementById('screen-' + step).classList.add('active');
+    setDot(step, 'active');
+    if (step === 3) showFinal();
+  }
+
+  /* ─── option pick ─── */
+  function pick(btn, field, label, emoji) {
+    btn.closest('.grid-2x3, .grid-2x2')
+       .querySelectorAll('.opt-btn')
+       .forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    ans[field] = label;
+    ans[field + 'Emoji'] = emoji;
+    setTimeout(advance, 480);
+  }
+
+  /* ─── final screen ─── */
+  function showFinal() {
+    document.getElementById('s-type').textContent = ans.typeEmoji + ' ' + ans.type;
+    document.getElementById('s-when').textContent = ans.when + ' ' + ans.whenEmoji;
+    confetti();
+  }
+
+  /* ─── reset ─── */
+  function reset() {
+    document.getElementById('screen-' + step).classList.remove('active');
+    setDot(step, null);
+    step = 0;
+    ans.type = ''; ans.typeEmoji = ''; ans.when = ''; ans.whenEmoji = '';
+    teaserShown = false; noEscapes = 0;
+    document.getElementById('no-teaser').textContent = '';
+    document.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
+    const nb = document.getElementById('no-btn');
+    nb.style.left = '0'; nb.style.top = '0';
+    document.getElementById('screen-0').classList.add('active');
+    setDot(0, 'active');
+  }
+
+  /* ─── no-button escape ─── */
+  const noBtn   = document.getElementById('no-btn');
+  const s0Btns  = document.getElementById('s0-btns');
+
+  function escapeFrom(mx, my) {
+    const cr  = s0Btns.getBoundingClientRect();
+    const bw  = noBtn.offsetWidth;
+    const bh  = noBtn.offsetHeight;
+    // yes button occupies bottom ~56px; give it 10px breathing room
+    const maxTop = cr.height - 56 - 10 - bh;
+
+    // candidate positions: a 4×3 grid across the escape zone
+    const cols = 4, rows = 3;
+    const candidates = [];
+    for (let r = 0; r <= rows; r++) {
+      for (let c = 0; c <= cols; c++) {
+        candidates.push({
+          left: Math.round(c * (cr.width - bw) / cols),
+          top:  Math.round(r * Math.max(maxTop, 0) / rows),
+        });
+      }
+    }
+
+    // pick the candidate whose centre is farthest from mouse
+    let best = candidates[0], bestD = -1;
+    for (const p of candidates) {
+      const cx = cr.left + p.left + bw / 2;
+      const cy = cr.top  + p.top  + bh / 2;
+      const d  = Math.hypot(mx - cx, my - cy);
+      if (d > bestD) { bestD = d; best = p; }
+    }
+
+    noBtn.style.left = best.left + 'px';
+    noBtn.style.top  = best.top  + 'px';
+
+    if (!teaserShown) {
+      teaserShown = true;
+      document.getElementById('no-teaser').textContent = teasers[0];
+    }
+  }
+
+  document.addEventListener('mousemove', e => {
+    if (step !== 0) return;
+    const r  = noBtn.getBoundingClientRect();
+    const cx = r.left + r.width  / 2;
+    const cy = r.top  + r.height / 2;
+    if (Math.hypot(e.clientX - cx, e.clientY - cy) < 130) {
+      escapeFrom(e.clientX, e.clientY);
+    }
+  });
+
+  document.addEventListener('touchmove', e => {
+    if (step !== 0) return;
+    const t  = e.touches[0];
+    const r  = noBtn.getBoundingClientRect();
+    const cx = r.left + r.width  / 2;
+    const cy = r.top  + r.height / 2;
+    if (Math.hypot(t.clientX - cx, t.clientY - cy) < 130) {
+      escapeFrom(t.clientX, t.clientY);
+    }
+  }, { passive: true });
+
+  noBtn.addEventListener('click', () => {
+    noEscapes++;
+    document.getElementById('no-teaser').textContent = teasers[Math.min(noEscapes, teasers.length - 1)];
+    // jump to a random spot away from current position
+    const cr   = s0Btns.getBoundingClientRect();
+    const bw   = noBtn.offsetWidth;
+    const bh   = noBtn.offsetHeight;
+    const maxT = Math.max(cr.height - 56 - 10 - bh, 0);
+    noBtn.style.left = Math.round(Math.random() * (cr.width  - bw)) + 'px';
+    noBtn.style.top  = Math.round(Math.random() * maxT) + 'px';
+  });
+
+  /* ─── confetti ─── */
+  function confetti() {
+    const wrap   = document.getElementById('confetti');
+    const colors = ['#f472b6','#fbbf24','#c084fc','#34d399','#60a5fa','#fb923c','#e879f9'];
+    const shapes = ['50%', '0', '0'];
+
+    for (let i = 0; i < 90; i++) {
+      setTimeout(() => {
+        const el   = document.createElement('div');
+        el.className = 'cp';
+        const sz  = 7 + Math.random() * 9;
+        const dur = 1.6 + Math.random() * 1.8;
+        el.style.cssText = `
+          left:${Math.random()*100}%;
+          width:${sz}px; height:${sz}px;
+          background:${colors[i % colors.length]};
+          border-radius:${shapes[i % shapes.length]};
+          animation-duration:${dur}s;
+        `;
+        wrap.appendChild(el);
+        setTimeout(() => el.remove(), dur * 1000 + 100);
+      }, i * 28);
+    }
+  }
+
+  /* ─── background sparkles ─── */
+  const sparkleChars = ['✦','✧','⋆','·','✸','✺'];
+  function addSparkle() {
+    const el = document.createElement('div');
+    el.className = 'bg-sparkle';
+    el.textContent = sparkleChars[Math.floor(Math.random() * sparkleChars.length)];
+    el.style.cssText = `
+      left:${Math.random()*100}%;
+      bottom:-20px;
+      color: hsl(${Math.random()*60+260},80%,75%);
+      animation-duration:${6+Math.random()*8}s;
+      animation-delay:0s;
+      font-size:${10+Math.random()*14}px;
+    `;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 14000);
+  }
+  setInterval(addSparkle, 600);
+</script>
+</body>
+</html>
